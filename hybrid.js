@@ -905,7 +905,7 @@ async function main() {
     }
     fps.innerText = Math.round(avgFps) + " fps";
     lastFrame = now;
-    requestAnimationFrame(frame);
+    window._4dgsFrameId = requestAnimationFrame(frame);
   };
 
   frame();
@@ -1010,25 +1010,24 @@ async function main() {
 }
 
 window.start4DGS = function () {
-  // 等待 DOM 元素渲染完成再执行 main()
   setTimeout(() => {
     try {
+      ["spinner", "progress", "message"].forEach(id => {
+        if (!document.getElementById(id)) {
+          const el = document.createElement("div");
+          el.id = id;
+          document.body.appendChild(el);
+        }
+      });
+
       const spinner = document.getElementById("spinner");
       const message = document.getElementById("message");
       const canvas = document.getElementById("canvas");
-
       if (spinner) spinner.style.display = "flex";
       if (canvas) canvas.style.display = "block";
 
-      if (!window.camera && window.cameras && window.cameras.length > 0) {
-        window.camera = window.cameras[0];
-      }
-
-      // 启动 main
       main()
-        .then(() => {
-          if (spinner) spinner.style.display = "none";
-        })
+        .then(() => { if (spinner) spinner.style.display = "none"; })
         .catch((err) => {
           console.error("❌ Error in main():", err);
           if (spinner) spinner.style.display = "none";
@@ -1039,8 +1038,9 @@ window.start4DGS = function () {
       const msg = document.getElementById("message");
       if (msg) msg.innerText = err.toString();
     }
-  }, 100); // 延迟100ms确保DOM加载完
+  }, 150);
 };
+
 
 function attachShaders(gl, vertexShaderSource, fragmentShaderSource) {
   const vertexShader = gl.createShader(gl.VERTEX_SHADER);
