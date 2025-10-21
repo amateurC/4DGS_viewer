@@ -1011,11 +1011,42 @@ async function main() {
 
 // ✅ 包装为一个全局函数，供 index.html 按钮点击时调用
 window.start4DGS = function () {
-  main().catch((err) => {
-    document.getElementById("spinner").style.display = "none";
-    document.getElementById("message").innerText = err.toString();
-  });
+  try {
+    // --- 安全地隐藏菜单 & 显示 4DGS 画布 ---
+    const entry = document.getElementById("entry");
+    const canvas = document.getElementById("canvas");
+    const spinner = document.getElementById("spinner");
+    const message = document.getElementById("message");
+
+    if (entry) entry.style.display = "none";
+    if (canvas) canvas.style.display = "block";
+    if (spinner) spinner.style.display = "flex";
+
+    // --- 确保 camera 正确初始化 ---
+    if (!window.camera && window.cameras && window.cameras.length > 0) {
+      window.camera = window.cameras[0];
+      console.log("✅ Default camera initialized:", window.camera);
+    } else if (!window.cameras || window.cameras.length === 0) {
+      console.warn("⚠️ Cameras list is empty — check your scene loading step.");
+    }
+
+    // --- 启动主函数 ---
+    main()
+      .then(() => {
+        if (spinner) spinner.style.display = "none";
+      })
+      .catch((err) => {
+        console.error("❌ Error in main():", err);
+        if (spinner) spinner.style.display = "none";
+        if (message) message.innerText = err.toString();
+      });
+  } catch (err) {
+    console.error("❌ start4DGS failed:", err);
+    const msg = document.getElementById("message");
+    if (msg) msg.innerText = err.toString();
+  }
 };
+
 
 function attachShaders(gl, vertexShaderSource, fragmentShaderSource) {
   const vertexShader = gl.createShader(gl.VERTEX_SHADER);
