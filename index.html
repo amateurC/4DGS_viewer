@@ -245,4 +245,27 @@
 
       // ====== 视频卡片点击播放 ======
       document.querySelectorAll(".video-card").forEach((card) => {
-        card.onclick =
+        card.onclick = () => {
+          const src = card.getAttribute("data-src");
+          video.src = src;
+          list.style.display = "none";
+          video.style.display = "block";
+          backBtn.style.display = "block";
+          video.play();
+        };
+      });
+
+      // ====== 返回入口 ======
+      document.getElementById("backtoentry").onclick = () => {
+        list.style.display = "none";
+        entry.style.display = "flex";
+      };
+      backBtn.onclick = () => {
+        video.pause();
+        video.style.display = "none";
+        backBtn.style.display = "none";
+        entry.style.display = "flex";
+      };
+    </script>
+  </body>
+</html>
