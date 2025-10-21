@@ -1009,10 +1009,13 @@ async function main() {
   await readChunks(req.body.getReader(), [{ size: 8, type: "magic" }], chunkHandler);
 }
 
-main().catch((err) => {
-  document.getElementById("spinner").style.display = "none";
-  document.getElementById("message").innerText = err.toString();
-});
+// ✅ 包装为一个全局函数，供 index.html 按钮点击时调用
+window.start4DGS = function () {
+  main().catch((err) => {
+    document.getElementById("spinner").style.display = "none";
+    document.getElementById("message").innerText = err.toString();
+  });
+};
 
 function attachShaders(gl, vertexShaderSource, fragmentShaderSource) {
   const vertexShader = gl.createShader(gl.VERTEX_SHADER);
