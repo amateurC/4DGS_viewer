@@ -1,44 +1,50 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <title>4DGS Viewer & Video Gallery</title>
+    <title>WebGL Spacetime Gaussian Splat Viewer</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="data:," /> <!-- 避免 favicon.ico 404 -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" href="data:," /> <!-- 避免 favicon 404 -->
     <style>
       body {
+        overflow: hidden;
         margin: 0;
         height: 100vh;
         width: 100vw;
-        font-family: "Segoe UI", sans-serif;
-        background: #000;
-        color: #fff;
-        overflow: hidden;
+        font-family: sans-serif;
+        background: black;
+        text-shadow: 0 0 3px black;
       }
+      a, body { color: white; }
 
-      /* ===== 入口界面 ===== */
-      #entry {
+      /* ========= 入口选择界面 ========= */
+      #menu {
         position: absolute;
         inset: 0;
-        z-index: 1000;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         background: radial-gradient(circle at center, #000 70%, #111 100%);
+        z-index: 5000;
       }
 
-      #entry h1 {
+      #menu h1 {
         font-size: 26px;
+        color: white;
         margin-bottom: 25px;
-        color: #fff;
       }
 
-      #entry button {
+      #menu button {
         margin: 10px;
         padding: 10px 30px;
         font-size: 16px;
-        color: #fff;
+        color: white;
         background: #007bff;
         border: none;
         border-radius: 8px;
@@ -46,11 +52,11 @@
         transition: background 0.3s;
       }
 
-      #entry button:hover {
+      #menu button:hover {
         background: #0056d2;
       }
 
-      /* ===== 视频库布局 ===== */
+      /* ========= 视频缩略图库 ========= */
       #videolist {
         display: none;
         position: absolute;
@@ -58,14 +64,13 @@
         background: #0b0b0b;
         overflow-y: auto;
         padding: 30px;
-        z-index: 1500;
+        z-index: 4000;
       }
 
       #videolist h2 {
         text-align: center;
+        color: white;
         margin-bottom: 25px;
-        font-size: 22px;
-        color: #f0f0f0;
       }
 
       .video-grid {
@@ -76,7 +81,6 @@
       }
 
       .video-card {
-        width: 100%;
         background: #111;
         border-radius: 10px;
         overflow: hidden;
@@ -93,34 +97,20 @@
         width: 100%;
         height: 130px;
         object-fit: cover;
-        background: #222;
       }
 
       .video-title {
         padding: 10px;
-        font-size: 15px;
-        color: #ddd;
         text-align: center;
-      }
-
-      /* ===== 视频播放 ===== */
-      #videoplayer {
-        display: none;
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        background: black;
-        object-fit: contain;
-        z-index: 2000;
+        color: #ccc;
       }
 
       #backbtn {
         position: absolute;
         top: 15px;
         left: 15px;
-        z-index: 3000;
-        background: rgba(0, 0, 0, 0.6);
+        z-index: 6000;
+        background: rgba(0,0,0,0.6);
         border: 1px solid #666;
         color: white;
         padding: 6px 12px;
@@ -129,70 +119,95 @@
         display: none;
       }
 
-      /* ===== 4DGS Canvas ===== */
-      #canvas {
-        display: none;
-        width: 100%;
-        height: 100%;
-      }
-
-      /* ===== Spinner & Message ===== */
-      .scene {
+      /* ========= 原有 Viewer 样式 ========= */
+      .scene, #message {
         position: absolute;
         display: flex;
+        top: 0; right: 0; left: 0; bottom: 0;
+        z-index: 2;
         align-items: center;
         justify-content: center;
-        inset: 0;
-        z-index: 2;
+      }
+
+      #canvas {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
       }
 
       #message {
-        position: absolute;
-        top: 10px;
-        left: 10px;
         color: red;
-        z-index: 10;
+        font-weight: bold;
+        pointer-events: none;
       }
 
-      .cube-wrapper {
-        transform-style: preserve-3d;
+      #progress {
+        position: absolute;
+        top: 0;
+        height: 5px;
+        background: blue;
+        z-index: 99;
+      }
+
+      #quality {
+        position: absolute;
+        bottom: 10px;
+        z-index: 999;
+        right: 10px;
+      }
+
+      #caminfo {
+        position: absolute;
+        top: 10px;
+        z-index: 999;
+        right: 10px;
+      }
+
+      .cube-wrapper { transform-style: preserve-3d; }
+      .cube { transform-style: preserve-3d; transform: rotateX(45deg) rotateZ(45deg); animation: rotation 2s infinite; }
+      @keyframes rotation {
+        0% { transform: rotateX(45deg) rotateZ(45deg); }
+        50% { transform: rotateX(45deg) rotateZ(225deg); }
+        100% { transform: rotateX(45deg) rotateZ(405deg); }
       }
     </style>
   </head>
   <body>
-    <!-- 🌟 模式选择入口 -->
-    <div id="entry">
+    <!-- 🌟 模式选择 -->
+    <div id="menu">
       <h1>Choose Mode</h1>
       <button id="btn4dgs">Enter 4DGS Viewer</button>
       <button id="btnvideo">View Video Library</button>
     </div>
 
-    <!-- 🎬 视频缩略图列表 -->
+    <!-- 🎬 视频库 -->
     <div id="videolist">
       <h2>Video Gallery</h2>
       <div class="video-grid">
         <div class="video-card" data-src="videos/demo1.mp4">
-          <img src="videos/thumb1.jpg" class="thumb" alt="Demo1" />
+          <img src="videos/thumb1.jpg" class="thumb" />
           <div class="video-title">Demo Video 1</div>
         </div>
         <div class="video-card" data-src="videos/demo2.mp4">
-          <img src="videos/thumb2.jpg" class="thumb" alt="Demo2" />
+          <img src="videos/thumb2.jpg" class="thumb" />
           <div class="video-title">Demo Video 2</div>
-        </div>
-        <!-- <div class="video-card" data-src="videos/demo3.mp4">
-          <img src="videos/thumb3.jpg" class="thumb" alt="Demo3" />
-          <div class="video-title">Demo Video 3</div> -->
         </div>
       </div>
       <button id="backtoentry" style="margin-top:30px;">Back</button>
     </div>
 
-    <!-- ▶️ 视频播放 -->
-    <video id="videoplayer" controls></video>
+    <!-- ▶️ 播放器 -->
+    <video id="videoplayer" controls style="display:none; position:absolute; inset:0; width:100%; height:100%; background:black; object-fit:contain; z-index:5000;"></video>
     <button id="backbtn">Back</button>
 
-    <!-- 🌌 4DGS 原有 Canvas & Spinner -->
-    <canvas id="canvas"></canvas>
+    <!-- 🌌 原有 viewer 元素 -->
+    <div id="info"><p></p></div>
+    <div id="progress"></div>
+    <div id="message"></div>
     <div class="scene" id="spinner">
       <div class="cube-wrapper">
         <div class="cube">
@@ -207,64 +222,59 @@
         </div>
       </div>
     </div>
-    <div id="message"></div>
+    <canvas id="canvas"></canvas>
 
+    <div id="quality"><span id="fps"></span></div>
+    <div id="caminfo"><span id="camid"></span></div>
+
+    <!-- ===== 控制逻辑 ===== -->
     <script>
-      const entry = document.getElementById("entry");
-      const list = document.getElementById("videolist");
+      const menu = document.getElementById("menu");
+      const videolist = document.getElementById("videolist");
       const video = document.getElementById("videoplayer");
-      const canvas = document.getElementById("canvas");
       const backBtn = document.getElementById("backbtn");
+      const canvas = document.getElementById("canvas");
 
-      // ====== 启动 4DGS 模式 ======
-      document.getElementById("btn4dgs").onclick = () => {
-        entry.style.display = "none";
-        canvas.style.display = "block";
-        const script = document.createElement("script");
-        script.src = "hybrid.js";
-        script.onload = () => {
-          if (window.start4DGS) {
-            try {
-              start4DGS();
-            } catch (err) {
-              console.error("start4DGS failed:", err);
-              document.getElementById("message").innerText = err;
-            }
-          } else {
-            document.getElementById("message").innerText = "start4DGS not found in hybrid.js";
-          }
-        };
-        document.body.appendChild(script);
-      };
-
-      // ====== 进入视频库 ======
+      // 🎥 查看视频库
       document.getElementById("btnvideo").onclick = () => {
-        entry.style.display = "none";
-        list.style.display = "block";
+        menu.style.display = "none";
+        videolist.style.display = "block";
       };
 
-      // ====== 视频卡片点击播放 ======
-      document.querySelectorAll(".video-card").forEach((card) => {
+      // 🎬 点击缩略图播放
+      document.querySelectorAll(".video-card").forEach(card => {
         card.onclick = () => {
-          const src = card.getAttribute("data-src");
-          video.src = src;
-          list.style.display = "none";
+          video.src = card.getAttribute("data-src");
           video.style.display = "block";
+          videolist.style.display = "none";
           backBtn.style.display = "block";
           video.play();
         };
       });
 
-      // ====== 返回入口 ======
+      // ↩️ 返回按钮
       document.getElementById("backtoentry").onclick = () => {
-        list.style.display = "none";
-        entry.style.display = "flex";
+        videolist.style.display = "none";
+        menu.style.display = "flex";
       };
       backBtn.onclick = () => {
         video.pause();
         video.style.display = "none";
         backBtn.style.display = "none";
-        entry.style.display = "flex";
+        menu.style.display = "flex";
+      };
+
+      // 🚀 启动 4DGS Viewer
+      document.getElementById("btn4dgs").onclick = () => {
+        menu.style.display = "none";
+        canvas.style.display = "block";
+        const script = document.createElement("script");
+        script.src = "hybrid.js";
+        script.onload = () => {
+          if (window.start4DGS) start4DGS();
+          else console.error("start4DGS not found in hybrid.js");
+        };
+        document.body.appendChild(script);
       };
     </script>
   </body>
