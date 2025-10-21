@@ -290,19 +290,27 @@
       };
 
       /* === 🚀 启动 4DGS Viewer === */
+      let _hybridLoaded = false;
+
       document.getElementById("btn4dgs").onclick = () => {
         menu.style.display = "none";
         canvas.style.display = "block";
         back4dgs.style.display = "block";
-        const script = document.createElement("script");
-        script.src = "hybrid.js";
-        script.onload = () => {
-          if (window.start4DGS) start4DGS();
-          else console.error("start4DGS not found in hybrid.js");
-        };
-        document.body.appendChild(script);
-      };
 
+        if (!_hybridLoaded) {
+          const script = document.createElement("script");
+          script.src = "hybrid.js";
+          script.onload = () => {
+            _hybridLoaded = true;
+            if (window.start4DGS) start4DGS();
+            else console.error("start4DGS not found in hybrid.js");
+          };
+          document.body.appendChild(script);
+        } else {
+          // hybrid.js 已经加载过，只需重新启动 4DGS
+          if (window.start4DGS) start4DGS();
+        }
+      };
       /* === 🔙 从 4DGS 返回主菜单 === */
       back4dgs.onclick = () => {
         try {
