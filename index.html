@@ -303,30 +303,47 @@
           script.onload = () => {
             _hybridLoaded = true;
             if (window.start4DGS) start4DGS();
-            else console.error("start4DGS not found in hybrid.js");
           };
           document.body.appendChild(script);
         } else {
-          // hybrid.js 已经加载过，只需重新启动 4DGS
           if (window.start4DGS) start4DGS();
         }
       };
+      
       /* === 🔙 从 4DGS 返回主菜单 === */
       back4dgs.onclick = () => {
         try {
           if (window.cancelAnimationFrame && window._4dgsFrameId)
             cancelAnimationFrame(window._4dgsFrameId);
+
+          // 隐藏 4DGS 相关
           back4dgs.style.display = "none";
           canvas.style.display = "none";
-          const spinner = document.getElementById("spinner");
-          if (spinner) spinner.style.display = "none";
-          document.getElementById("menu").style.display = "flex";
+          document.getElementById("spinner").style.display = "none";
+          menu.style.display = "flex";
+
+          // 🔧 彻底销毁 WebGL 上下文
           const gl = document.getElementById("canvas").getContext("webgl2");
           gl?.getExtension("WEBGL_lose_context")?.loseContext();
-          console.log("✅ Returned to main menu");
+
+          // 🧹 清除 hybrid.js 相关全局变量
+          for (const k in window) {
+            if (["start4DGS", "_4dgsFrameId"].includes(k)) continue;
+            if (k.toLowerCase().includes("camera") ||
+                k.toLowerCase().includes("scene") ||
+                k.toLowerCase().includes("splat"))
+              delete window[k];
+          }
+
+          // 🧩 移除旧的脚本
+          document.querySelectorAll('script[src="hybrid.js"]').forEach(s => s.remove());
+          window.__HYBRID_ALREADY_LOADED__ = false;
+          _hybridLoaded = false;
+
+          console.log("✅ Returned to main menu (fully cleaned)");
         } catch (err) {
           console.error("❌ Error on back:", err);
-          document.getElementById("menu").style.display = "flex";
+          menu.style.display = "flex";
         }
       };
     </script>
