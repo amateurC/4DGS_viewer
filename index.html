@@ -1,51 +1,46 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <title>WebGL Spacetime Gaussian Splat Viewer</title>
+    <title>4DGS Viewer & Video Gallery</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body {
-        overflow: hidden;
         margin: 0;
         height: 100vh;
         width: 100vw;
-        font-family: sans-serif;
-        background: black;
-        text-shadow: 0 0 3px black;
-        color: white;
+        font-family: "Segoe UI", sans-serif;
+        background: #000;
+        color: #fff;
+        overflow: hidden;
       }
 
+      /* ===== 入口界面 ===== */
       #entry {
         position: absolute;
-        z-index: 2000;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: 0;
+        z-index: 1000;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        flex-direction: column;
-        background: radial-gradient(circle at center, #000000 70%, #111111 100%);
+        background: radial-gradient(circle at center, #000 70%, #111 100%);
       }
 
       #entry h1 {
-        font-size: 24px;
-        margin-bottom: 20px;
-        color: #ffffff;
+        font-size: 26px;
+        margin-bottom: 25px;
+        color: #fff;
       }
 
       #entry button {
         margin: 10px;
-        padding: 10px 25px;
+        padding: 10px 30px;
+        font-size: 16px;
+        color: #fff;
         background: #007bff;
         border: none;
         border-radius: 8px;
-        color: white;
-        font-size: 16px;
         cursor: pointer;
         transition: background 0.3s;
       }
@@ -54,85 +49,138 @@
         background: #0056d2;
       }
 
-      #entry input[type="file"] {
+      /* ===== 视频库布局 ===== */
+      #videolist {
         display: none;
+        position: absolute;
+        inset: 0;
+        background: #0b0b0b;
+        overflow-y: auto;
+        padding: 30px;
+        z-index: 1500;
       }
 
+      #videolist h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        font-size: 22px;
+        color: #f0f0f0;
+      }
+
+      .video-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 20px;
+        justify-items: center;
+      }
+
+      .video-card {
+        width: 100%;
+        background: #111;
+        border-radius: 10px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+      }
+
+      .video-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 0 15px rgba(0, 150, 255, 0.3);
+      }
+
+      .thumb {
+        width: 100%;
+        height: 130px;
+        object-fit: cover;
+        background: #222;
+      }
+
+      .video-title {
+        padding: 10px;
+        font-size: 15px;
+        color: #ddd;
+        text-align: center;
+      }
+
+      /* ===== 视频播放 ===== */
       #videoplayer {
         display: none;
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
         background: black;
         object-fit: contain;
+        z-index: 2000;
       }
 
-      /* 原样保留 4DGS 的 UI 元素样式 */
-      #info,
-      #progress,
-      #message,
-      #spinner,
-      #quality,
-      #caminfo,
-      #canvas {
+      #backbtn {
         position: absolute;
+        top: 15px;
+        left: 15px;
+        z-index: 3000;
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid #666;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: none;
       }
 
+      /* ===== 4DGS Canvas ===== */
       #canvas {
         display: none;
         width: 100%;
         height: 100%;
-        top: 0;
-        left: 0;
       }
     </style>
   </head>
   <body>
-    <!-- ✅ 新增入口界面 -->
+    <!-- 🌟 模式选择入口 -->
     <div id="entry">
       <h1>Choose Mode</h1>
       <button id="btn4dgs">Enter 4DGS Viewer</button>
-      <button id="btnvideo">Load and Play Video</button>
-      <input type="file" id="videofile" accept="video/*" />
+      <button id="btnvideo">View Video Library</button>
     </div>
 
-    <!-- 🎬 视频播放器 -->
-    <video id="videoplayer" controls></video>
-
-    <!-- 🌌 原有 4DGS 渲染组件（隐藏直到激活） -->
-    <div id="info"><p></p></div>
-    <div id="progress"></div>
-    <div id="message"></div>
-    <div class="scene" id="spinner">
-      <div class="cube-wrapper">
-        <div class="cube">
-          <div class="cube-faces">
-            <div class="cube-face bottom"></div>
-            <div class="cube-face top"></div>
-            <div class="cube-face left"></div>
-            <div class="cube-face right"></div>
-            <div class="cube-face back"></div>
-            <div class="cube-face front"></div>
-          </div>
+    <!-- 🎬 视频缩略图列表 -->
+    <div id="videolist">
+      <h2>Video Gallery</h2>
+      <div class="video-grid">
+        <div class="video-card" data-src="videos/demo1.mp4">
+          <img src="videos/thumb1.jpg" class="thumb" alt="Demo1" />
+          <div class="video-title">Demo Video 1</div>
+        </div>
+        <div class="video-card" data-src="videos/demo2.mp4">
+          <img src="videos/thumb2.jpg" class="thumb" alt="Demo2" />
+          <div class="video-title">Demo Video 2</div>
+        </div>
+        <div class="video-card" data-src="videos/demo3.mp4">
+          <img src="videos/thumb3.jpg" class="thumb" alt="Demo3" />
+          <div class="video-title">Demo Video 3</div>
         </div>
       </div>
+      <button id="backtoentry" style="margin-top:30px;">Back</button>
     </div>
+
+    <!-- ▶️ 视频播放 -->
+    <video id="videoplayer" controls></video>
+    <button id="backbtn">Back</button>
+
+    <!-- 🌌 4DGS 原有 Canvas -->
     <canvas id="canvas"></canvas>
-    <div id="quality"><span id="fps"></span></div>
-    <div id="caminfo"><span id="camid"></span></div>
 
     <script>
       const entry = document.getElementById("entry");
-      const btn4dgs = document.getElementById("btn4dgs");
-      const btnvideo = document.getElementById("btnvideo");
-      const fileInput = document.getElementById("videofile");
+      const list = document.getElementById("videolist");
       const video = document.getElementById("videoplayer");
       const canvas = document.getElementById("canvas");
+      const backBtn = document.getElementById("backbtn");
 
-      // ▶️ 进入 4DGS 模式
-      btn4dgs.onclick = () => {
+      document.getElementById("btn4dgs").onclick = () => {
         entry.style.display = "none";
         canvas.style.display = "block";
-        // 动态加载 hybrid.js 并执行 start4DGS()
         const script = document.createElement("script");
         script.src = "hybrid.js";
         script.onload = () => {
@@ -141,15 +189,33 @@
         document.body.appendChild(script);
       };
 
-      // 🎬 加载视频
-      btnvideo.onclick = () => fileInput.click();
-      fileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+      document.getElementById("btnvideo").onclick = () => {
         entry.style.display = "none";
-        video.style.display = "block";
-        video.src = URL.createObjectURL(file);
-        video.play();
+        list.style.display = "block";
+      };
+
+      // 视频卡片点击播放
+      document.querySelectorAll(".video-card").forEach((card) => {
+        card.onclick = () => {
+          const src = card.getAttribute("data-src");
+          video.src = src;
+          list.style.display = "none";
+          video.style.display = "block";
+          backBtn.style.display = "block";
+          video.play();
+        };
+      });
+
+      // 返回入口
+      document.getElementById("backtoentry").onclick = () => {
+        list.style.display = "none";
+        entry.style.display = "flex";
+      };
+      backBtn.onclick = () => {
+        video.pause();
+        video.style.display = "none";
+        backBtn.style.display = "none";
+        entry.style.display = "flex";
       };
     </script>
   </body>
