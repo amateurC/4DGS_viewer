@@ -403,7 +403,22 @@ async function main() {
   );
 
   const canvas = document.getElementById("canvas");
-  const fps = document.getElementById("fps");
+  let fps = document.getElementById("fps");
+  if (!fps) {
+    const el = document.createElement("div");
+    el.id = "fps";
+    el.style.position = "absolute";
+    el.style.right = "12px";
+    el.style.bottom = "12px";
+    el.style.padding = "4px 8px";
+    el.style.borderRadius = "6px";
+    el.style.background = "rgba(0,0,0,0.55)";
+    el.style.color = "#fff";
+    el.style.font = "12px/1.2 monospace";
+    el.style.zIndex = 6003;
+    document.body.appendChild(el);
+    fps = el;
+  }
   //   const camid = document.getElementById("camid");
 
   let projectionMatrix;
@@ -467,9 +482,11 @@ async function main() {
   gl.vertexAttribDivisor(a_index, 1);
 
   const resize = () => {
-    gl.uniform2fv(u_focal, new Float32Array([camera.fx, camera.fy]));
+    const fx = camera && typeof camera.fx === 'number' ? camera.fx : 1200;
+    const fy = camera && typeof camera.fy === 'number' ? camera.fy : 1200;
+    gl.uniform2fv(u_focal, new Float32Array([fx, fy]));
 
-    projectionMatrix = getProjectionMatrix(camera.fx, camera.fy, innerWidth, innerHeight);
+    projectionMatrix = getProjectionMatrix(fx, fy, innerWidth, innerHeight);
 
     gl.uniform2fv(u_viewport, new Float32Array([innerWidth, innerHeight]));
 
@@ -527,18 +544,32 @@ async function main() {
     // if (document.activeElement != document.body) return;
     carousel = false;
     if (!activeKeys.includes(e.code)) activeKeys.push(e.code);
-    if (/\d/.test(e.key)) {
-      currentCameraIndex = parseInt(e.key);
-      camera = cameras[currentCameraIndex];
-      viewMatrix = getViewMatrix(camera);
+    if (/\d/.test(e.key) && Array.isArray(cameras) && cameras.length) {
+      const idx = parseInt(e.key, 10);
+      if (!isNaN(idx) && cameras[idx]) {
+        currentCameraIndex = idx;
+        const nextCam = cameras[currentCameraIndex];
+        if (nextCam && nextCam.rotation && nextCam.position) {
+          camera = nextCam;
+          viewMatrix = getViewMatrix(camera);
+        }
+      }
     }
-    if (["-", "_"].includes(e.key)) {
+    if (["-", "_"].includes(e.key) && Array.isArray(cameras) && cameras.length) {
       currentCameraIndex = (currentCameraIndex + cameras.length - 1) % cameras.length;
-      viewMatrix = getViewMatrix(cameras[currentCameraIndex]);
+      const nextCam = cameras[currentCameraIndex];
+      if (nextCam && nextCam.rotation && nextCam.position) {
+        camera = nextCam;
+        viewMatrix = getViewMatrix(camera);
+      }
     }
-    if (["+", "="].includes(e.key)) {
+    if (["+", "="].includes(e.key) && Array.isArray(cameras) && cameras.length) {
       currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
-      viewMatrix = getViewMatrix(cameras[currentCameraIndex]);
+      const nextCam = cameras[currentCameraIndex];
+      if (nextCam && nextCam.rotation && nextCam.position) {
+        camera = nextCam;
+        viewMatrix = getViewMatrix(camera);
+      }
     }
     // camid.innerText = "cam  " + currentCameraIndex;
     if (e.code == "KeyV") {
@@ -903,7 +934,7 @@ async function main() {
     } else {
       document.getElementById("progress").style.display = "none";
     }
-    fps.innerText = Math.round(avgFps) + " fps";
+    if (fps) fps.innerText = Math.round(avgFps) + " fps";
     lastFrame = now;
     window._4dgsFrameId = requestAnimationFrame(frame);
   };
@@ -915,8 +946,14 @@ async function main() {
     if (/\.json$/i.test(file.name)) {
       fr.onload = () => {
         cameras = JSON.parse(fr.result);
-        viewMatrix = getViewMatrix(cameras[0]);
-        projectionMatrix = getProjectionMatrix(camera.fx / downsample, camera.fy / downsample, canvas.width, canvas.height);
+        const cam0 = Array.isArray(cameras) && cameras.length ? cameras[0] : null;
+        if (cam0 && cam0.rotation && cam0.position) {
+          camera = cam0;
+          viewMatrix = getViewMatrix(camera);
+        }
+        const fx = camera && typeof camera.fx === 'number' ? camera.fx : 1200;
+        const fy = camera && typeof camera.fy === 'number' ? camera.fy : 1200;
+        projectionMatrix = getProjectionMatrix(fx / downsample, fy / downsample, canvas.width, canvas.height);
         gl.uniformMatrix4fv(u_projection, false, projectionMatrix);
 
         console.log("Loaded Cameras");
@@ -976,8 +1013,11 @@ async function main() {
       for (let chunk of JSON.parse(new TextDecoder("utf-8").decode(buffer))) {
         chunks.push(chunk);
         if (chunk.type === "splat") {
-          cameras = chunk.cameras;
-          camera = chunk.cameras[0];
+          cameras = chunk.cameras || cameras;
+          const cam0 = Array.isArray(cameras) && cameras.length ? cameras[0] : null;
+          if (cam0 && cam0.rotation && cam0.position) {
+            camera = cam0;
+          }
           resize();
         }
       }
