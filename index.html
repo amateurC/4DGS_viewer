@@ -73,6 +73,19 @@
         margin-bottom: 25px;
       }
 
+      #searchInput {
+        display: block;
+        margin: 0 auto 20px auto;
+        padding: 10px;
+        width: 60%;
+        font-size: 16px;
+        border-radius: 6px;
+        border: 1px solid #333;
+        background: #111;
+        color: white;
+        text-align: center;
+      }
+
       .video-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -187,6 +200,7 @@
     <!-- 🎬 视频库 -->
     <div id="videolist">
       <h2>Video Gallery</h2>
+      <input type="text" id="searchInput" placeholder="Search videos...">
       <div class="video-grid">
         <div class="video-card" data-src="videos/demo1.mp4">
           <img src="videos/thumb1.jpg" class="thumb" />
@@ -196,6 +210,14 @@
           <img src="videos/thumb2.jpg" class="thumb" />
           <div class="video-title">Demo Video 2</div>
         </div>
+        <!-- <div class="video-card" data-src="videos/coffee.mp4">
+          <img src="videos/coffee_thumb.jpg" class="thumb" />
+          <div class="video-title">Coffee Martini Scene</div>
+        </div>
+        <div class="video-card" data-src="videos/dance.mp4">
+          <img src="videos/dance_thumb.jpg" class="thumb" />
+          <div class="video-title">Dancing Girl</div>
+        </div> -->
       </div>
       <button id="backtoentry" style="margin-top:30px;">Back</button>
     </div>
@@ -250,6 +272,18 @@
           backBtn.style.display = "block";
           video.play();
         };
+      });
+
+      // 🔍 搜索功能
+      const searchInput = document.getElementById("searchInput");
+      const videoCards = document.querySelectorAll(".video-card");
+
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.toLowerCase().trim();
+        videoCards.forEach(card => {
+          const title = card.querySelector(".video-title").textContent.toLowerCase();
+          card.style.display = title.includes(query) ? "block" : "none";
+        });
       });
 
       // ↩️ 返回按钮
