@@ -3,25 +3,22 @@
   <head>
     <title>WebGL Spacetime Gaussian Splat Viewer</title>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"
-    />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
     <link rel="icon" href="data:," />
     <style>
+      /* 全局样式 */
       body {
-        overflow: hidden;
         margin: 0;
+        padding: 0;
         height: 100vh;
         width: 100vw;
-        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         background: #000;
-        color: white;
+        color: #fff;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        overflow: hidden;
       }
 
-      /* ========= 入口选择界面 ========= */
+      /* ===== 入口菜单 ===== */
       #menu {
         position: absolute;
         inset: 0;
@@ -34,9 +31,9 @@
       }
 
       #menu h1 {
-        font-size: 28px;
+        font-size: 30px;
         font-weight: 600;
-        background: linear-gradient(90deg, #00aaff, #66ccff);
+        background: linear-gradient(90deg, #00aaff, #88e0ff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         letter-spacing: 1px;
@@ -44,98 +41,128 @@
       }
 
       #menu button {
-        margin: 12px;
+        margin: 10px;
         padding: 12px 40px;
-        font-size: 17px;
+        font-size: 16px;
         color: white;
-        background: linear-gradient(135deg, #007bff, #00bfff);
+        background: linear-gradient(135deg, #007bff, #00cfff);
         border: none;
         border-radius: 10px;
         cursor: pointer;
-        box-shadow: 0 0 10px rgba(0, 150, 255, 0.3);
-        transition: all 0.3s ease;
+        box-shadow: 0 0 10px rgba(0, 180, 255, 0.4);
+        transition: all 0.3s;
       }
 
       #menu button:hover {
-        background: linear-gradient(135deg, #3399ff, #66d9ff);
-        transform: scale(1.05);
-        box-shadow: 0 0 20px rgba(0, 150, 255, 0.6);
+        transform: scale(1.06);
+        box-shadow: 0 0 25px rgba(0, 180, 255, 0.8);
       }
 
-      /* ========= 视频库 ========= */
+      /* ===== 视频库页 ===== */
       #videolist {
         display: none;
         position: absolute;
         inset: 0;
-        background: linear-gradient(180deg, #060606 0%, #0a0a0a 100%);
         overflow-y: auto;
-        padding: 40px 5%;
         z-index: 4000;
+        padding: 40px 5%;
+        background: radial-gradient(circle at top, #0d0d0d 0%, #000 100%);
         animation: fadeIn 0.6s ease;
       }
 
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
+        from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
       }
 
-      #videolist h2 {
+      /* ==== 顶部标题区域 ==== */
+      #videolist-header {
         text-align: center;
-        font-size: 26px;
-        font-weight: 600;
-        background: linear-gradient(90deg, #00bfff, #1affff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
         margin-bottom: 25px;
       }
 
-      #searchInput {
-        display: block;
-        margin: 0 auto 30px auto;
-        padding: 12px 16px;
-        width: 70%;
-        font-size: 16px;
-        border-radius: 8px;
-        border: 1px solid #222;
-        background: #111;
+      #videolist-header h2 {
+        font-size: 26px;
+        font-weight: 600;
         color: #fff;
-        box-shadow: 0 0 8px rgba(0, 150, 255, 0.15);
+        background: linear-gradient(90deg, #00bfff, #22ffff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 15px;
+      }
+
+      #searchInput {
+        width: 65%;
+        max-width: 500px;
+        display: block;
+        margin: 0 auto;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 25px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        font-size: 15px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 12px rgba(0, 180, 255, 0.2);
         transition: all 0.3s ease;
       }
 
       #searchInput:focus {
         outline: none;
-        border-color: #00bfff;
-        box-shadow: 0 0 15px rgba(0, 150, 255, 0.35);
+        box-shadow: 0 0 18px rgba(0, 200, 255, 0.6);
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      /* ==== 视频分区 ==== */
+      .video-section {
+        margin-top: 40px;
+      }
+
+      .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #88e0ff;
+        margin: 10px 0 20px 0;
+        position: relative;
+      }
+
+      .section-title::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -5px;
+        width: 60px;
+        height: 3px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, #00c6ff, #66ffff);
+        box-shadow: 0 0 10px rgba(0, 200, 255, 0.7);
       }
 
       .video-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
         gap: 25px;
-        justify-items: center;
       }
 
       .video-card {
-        background: #111;
+        background: rgba(255, 255, 255, 0.05);
         border-radius: 14px;
         overflow: hidden;
         cursor: pointer;
-        width: 100%;
-        max-width: 320px;
-        box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
         transition: all 0.3s ease;
-        transform: scale(1);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(6px);
       }
 
       .video-card:hover {
         transform: scale(1.05);
-        box-shadow: 0 0 20px rgba(0, 150, 255, 0.4);
+        box-shadow: 0 0 25px rgba(0, 200, 255, 0.6);
       }
 
       .thumb {
         width: 100%;
-        height: 160px;
+        height: 150px;
         object-fit: cover;
         transition: transform 0.4s ease;
       }
@@ -145,81 +172,71 @@
       }
 
       .video-title {
-        padding: 12px;
         text-align: center;
+        padding: 10px 8px;
+        color: #dcdcdc;
         font-size: 15px;
-        color: #ccc;
-        background: rgba(0, 0, 0, 0.4);
+        background: rgba(0, 0, 0, 0.35);
       }
 
+      /* ==== 返回按钮 ==== */
       #backtoentry {
-        margin-top: 40px;
         display: block;
-        margin-left: auto;
-        margin-right: auto;
+        margin: 40px auto 20px;
         padding: 10px 30px;
-        background: #222;
-        border: 1px solid #444;
-        border-radius: 8px;
-        color: white;
+        border-radius: 25px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(0, 180, 255, 0.4);
+        color: #fff;
         cursor: pointer;
         transition: all 0.3s ease;
+        backdrop-filter: blur(6px);
       }
 
       #backtoentry:hover {
-        background: #333;
-        border-color: #00bfff;
+        background: rgba(0, 180, 255, 0.2);
+        box-shadow: 0 0 20px rgba(0, 180, 255, 0.6);
       }
 
+      /* ==== 播放器返回按钮 ==== */
       #backbtn {
         position: absolute;
         top: 15px;
         left: 15px;
         z-index: 6000;
-        background: rgba(0,0,0,0.7);
-        border: 1px solid #666;
+        background: rgba(0,0,0,0.6);
+        border: 1px solid #66ccff;
         color: white;
         padding: 6px 14px;
         border-radius: 8px;
         cursor: pointer;
         display: none;
-        transition: background 0.3s;
+        transition: background 0.3s ease;
       }
 
       #backbtn:hover {
-        background: rgba(0,0,0,0.9);
+        background: rgba(0,0,0,0.8);
       }
 
-      /* ========= 原有 Viewer 样式 ========= */
+      /* ==== Viewer 样式 ==== */
       #canvas {
         display: none;
         position: absolute;
-        top: 0;
-        left: 0;
+        inset: 0;
         width: 100%;
         height: 100%;
-        touch-action: none;
       }
 
       #progress {
         position: absolute;
         top: 0;
         height: 5px;
-        background: linear-gradient(90deg, #007bff, #00bfff);
-        z-index: 99;
+        background: linear-gradient(90deg, #00bfff, #00ffff);
       }
-
-      #quality, #caminfo {
-        position: absolute;
-        font-size: 13px;
-        color: #ccc;
-      }
-      #quality { bottom: 10px; right: 10px; }
-      #caminfo { top: 10px; right: 10px; }
     </style>
   </head>
   <body>
-    <!-- 🌟 模式选择 -->
+    <!-- 🌟 入口 -->
     <div id="menu">
       <h1>Choose Mode</h1>
       <button id="btn4dgs">Enter 4DGS Viewer</button>
@@ -228,18 +245,41 @@
 
     <!-- 🎬 视频库 -->
     <div id="videolist">
-      <h2>Video Gallery</h2>
-      <input type="text" id="searchInput" placeholder="🔍 Search videos...">
-      <div class="video-grid">
-        <div class="video-card" data-src="videos/demo1.mp4">
-          <img src="videos/thumb1.jpg" class="thumb" />
-          <div class="video-title">Demo Video 1</div>
-        </div>
-        <div class="video-card" data-src="videos/demo2.mp4">
-          <img src="videos/thumb2.jpg" class="thumb" />
-          <div class="video-title">Demo Video 2</div>
+      <div id="videolist-header">
+        <h2>Video Gallery</h2>
+        <input type="text" id="searchInput" placeholder="🔍 Search videos...">
+      </div>
+
+      <!-- 🔹 Section 1 -->
+      <div class="video-section">
+        <div class="section-title">🔥 Featured Scenes</div>
+        <div class="video-grid">
+          <div class="video-card" data-src="videos/demo1.mp4">
+            <img src="videos/thumb1.jpg" class="thumb" />
+            <div class="video-title">Demo Video 1</div>
+          </div>
+          <div class="video-card" data-src="videos/demo2.mp4">
+            <img src="videos/thumb2.jpg" class="thumb" />
+            <div class="video-title">Demo Video 2</div>
+          </div>
         </div>
       </div>
+
+      <!-- 🔹 Section 2 -->
+      <div class="video-section">
+        <div class="section-title">🌆 Urban & Drone</div>
+        <div class="video-grid">
+          <div class="video-card" data-src="videos/city.mp4">
+            <img src="videos/city_thumb.jpg" class="thumb" />
+            <div class="video-title">City Flight</div>
+          </div>
+          <div class="video-card" data-src="videos/park.mp4">
+            <img src="videos/park_thumb.jpg" class="thumb" />
+            <div class="video-title">Central Park Walk</div>
+          </div>
+        </div>
+      </div>
+
       <button id="backtoentry">⬅ Back to Menu</button>
     </div>
 
@@ -247,10 +287,9 @@
     <video id="videoplayer" controls style="display:none; position:absolute; inset:0; width:100%; height:100%; background:black; object-fit:contain; z-index:5000;"></video>
     <button id="backbtn">Back</button>
 
+    <!-- Viewer -->
     <canvas id="canvas"></canvas>
     <div id="progress"></div>
-    <div id="quality"><span id="fps"></span></div>
-    <div id="caminfo"><span id="camid"></span></div>
 
     <script>
       const menu = document.getElementById("menu");
@@ -259,13 +298,13 @@
       const backBtn = document.getElementById("backbtn");
       const canvas = document.getElementById("canvas");
 
-      // 🎥 打开视频库
+      // 打开视频库
       document.getElementById("btnvideo").onclick = () => {
         menu.style.display = "none";
         videolist.style.display = "block";
       };
 
-      // 🎬 播放视频
+      // 点击播放视频
       document.querySelectorAll(".video-card").forEach(card => {
         card.onclick = () => {
           video.src = card.getAttribute("data-src");
@@ -276,7 +315,7 @@
         };
       });
 
-      // 🔍 搜索功能
+      // 搜索功能
       const searchInput = document.getElementById("searchInput");
       const videoCards = document.querySelectorAll(".video-card");
       searchInput.addEventListener("input", () => {
@@ -287,7 +326,7 @@
         });
       });
 
-      // ↩ 返回
+      // 返回按钮
       document.getElementById("backtoentry").onclick = () => {
         videolist.style.display = "none";
         menu.style.display = "flex";
@@ -299,7 +338,7 @@
         menu.style.display = "flex";
       };
 
-      // 🚀 启动 4DGS Viewer
+      // 启动 Viewer
       document.getElementById("btn4dgs").onclick = () => {
         menu.style.display = "none";
         canvas.style.display = "block";
