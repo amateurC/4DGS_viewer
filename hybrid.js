@@ -1012,10 +1012,45 @@ async function main() {
 window.start4DGS = function () {
   setTimeout(() => {
     try {
-      ["spinner", "progress", "message"].forEach(id => {
+      ["spinner", "progress", "message", "fps"].forEach(id => {
         if (!document.getElementById(id)) {
           const el = document.createElement("div");
           el.id = id;
+          if (id === "spinner") {
+            el.style.position = "absolute";
+            el.style.inset = "0";
+            el.style.display = "flex";
+            el.style.alignItems = "center";
+            el.style.justifyContent = "center";
+            el.style.zIndex = 6000;
+          }
+          if (id === "message") {
+            el.style.position = "absolute";
+            el.style.top = "12px";
+            el.style.left = "12px";
+            el.style.zIndex = 6001;
+            el.style.color = "#d00";
+            el.style.fontWeight = "600";
+          }
+          if (id === "progress") {
+            el.style.position = "absolute";
+            el.style.top = "0";
+            el.style.left = "0";
+            el.style.height = "5px";
+            el.style.background = "linear-gradient(90deg,#00bfff,#00ffff)";
+            el.style.zIndex = 6002;
+          }
+          if (id === "fps") {
+            el.style.position = "absolute";
+            el.style.right = "12px";
+            el.style.bottom = "12px";
+            el.style.padding = "4px 8px";
+            el.style.borderRadius = "6px";
+            el.style.background = "rgba(0,0,0,0.55)";
+            el.style.color = "#fff";
+            el.style.font = "12px/1.2 monospace";
+            el.style.zIndex = 6003;
+          }
           document.body.appendChild(el);
         }
       });
