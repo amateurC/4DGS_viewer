@@ -274,6 +274,29 @@
         background: rgba(0,0,0,0.8);
       }
 
+      /* ==== 4DGS 返回按钮 ==== */
+      #back4dgs {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        z-index: 6000;
+        background: #ffffff;
+        border: 1px solid #e6e6e6;
+        color: #1f2329;
+        padding: 8px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        display: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      }
+
+      #back4dgs:hover {
+        border-color: #00a1d6;
+        box-shadow: 0 0 0 3px rgba(0,161,214,0.15);
+        color: #0b78a0;
+      }
+
       /* ==== Viewer 样式 ==== */
       #canvas {
         display: none;
@@ -354,6 +377,7 @@
     <!-- Viewer -->
     <canvas id="canvas"></canvas>
     <div id="progress"></div>
+    <button id="back4dgs">⬅ Back</button>
 
     <script>
       const menu = document.getElementById("menu");
@@ -402,10 +426,28 @@
         menu.style.display = "flex";
       };
 
+      // 4DGS 返回首页
+      const back4dgs = document.getElementById("back4dgs");
+      back4dgs.onclick = () => {
+        if (window._4dgsFrameId) cancelAnimationFrame(window._4dgsFrameId);
+        const spinnerEl = document.getElementById("spinner");
+        const messageEl = document.getElementById("message");
+        const progressEl = document.getElementById("progress");
+        const fpsEl = document.getElementById("fps");
+        if (spinnerEl) spinnerEl.style.display = "none";
+        if (messageEl) messageEl.style.display = "none";
+        if (progressEl) progressEl.style.display = "none";
+        if (fpsEl) fpsEl.style.display = "none";
+        canvas.style.display = "none";
+        back4dgs.style.display = "none";
+        menu.style.display = "flex";
+      };
+
       // 启动 Viewer
       document.getElementById("btn4dgs").onclick = () => {
         menu.style.display = "none";
         canvas.style.display = "block";
+        back4dgs.style.display = "block";
         const script = document.createElement("script");
         script.src = "hybrid.js";
         script.onload = () => {
